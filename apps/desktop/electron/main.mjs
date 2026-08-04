@@ -55,6 +55,7 @@ import { fetchAgentContextDiagnosticsResponse } from "./agent-context-diagnostic
 import {
   createLinuxDesktopIntegration,
 } from "./linux-desktop-integration.mjs";
+import { createDesktopAutomationRunner } from "./automation-runner.mjs";
 import {
   desktopActivationRequired,
   enterprisePreactivationCommandAllowed,
@@ -218,8 +219,7 @@ function resolveAppIconPath() {
       : []),
     // Repo-relative path to the Electron resource icon set.
     path.resolve(__dirname, "../resources/icons/icon.png"),
-    // Packaged: electron-builder copies extraResources but we fall back to this
-    // if custom packaging ever exposes the icon here.
+    // Packaged Windows and Linux builds ship runtime icons via extraResources.
     path.join(process.resourcesPath ?? "", "icons", "linux", "512x512.png"),
     path.join(process.resourcesPath ?? "", "icons", "icon.png"),
   ];
@@ -1151,6 +1151,13 @@ const runtimeManager = createRuntimeManager({
   desktopRoot: path.resolve(__dirname, ".."),
   listLocalWorkspacePaths: () => workspaceStore.listLocalWorkspacePaths(),
 });
+const desktopAutomationRunner = createDesktopAutomationRunner({
+  getLocalRuntime: async () => {
+    const server = await runtimeManager.openworkServerInfo();
+    return { baseUrl: server.baseUrl, token: server.clientToken ?? server.ownerToken };
+  },
+  log: (state) => console.info(`[automation-runner] ${state}`),
+});
 
 let runtimeDisposedForQuit = false;
 let runtimeDisposeInProgress = false;
@@ -1815,6 +1822,9 @@ const desktopCommandHandlers = {
   },
   "openworkServerInfo": async (event, ...args) => {
       return runtimeManager.openworkServerInfo();
+  },
+  "automationRunnerConfigure": async (event, ...args) => {
+      return desktopAutomationRunner.configure(args[0] ?? null);
   },
   "openworkServerRestart": async (event, ...args) => {
       return runtimeManager.openworkServerRestart(args[0] ?? {});
@@ -2496,6 +2506,7 @@ or use: pnpm dev:worktree`);
     event.preventDefault();
     if (runtimeDisposeInProgress) return;
     showShutdownScreen();
+    desktopAutomationRunner.stop();
     void Promise.all([disposeRuntimeBeforeQuit(), uiControlServer.stop()]).finally(() => app.quit());
   });
 

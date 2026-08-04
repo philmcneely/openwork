@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "4842ee1d-77ec-4de7-8609-2a7127c1082a",
+  "id": "537be040-ace6-410b-9d1a-77faf3a2a192",
   "prevId": "f9927ae3-c4a5-4793-817c-3b82e5da2285",
   "tables": {
     "account": {
@@ -2751,41 +2751,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "model_id": {
-          "name": "model_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider_id": {
-          "name": "provider_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "input_tokens": {
-          "name": "input_tokens",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "output_tokens": {
-          "name": "output_tokens",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "total_tokens": {
-          "name": "total_tokens",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "event_type": {
           "name": "event_type",
           "type": "varchar(64)",
@@ -4661,6 +4626,13 @@
         },
         "oauth_configuration": {
           "name": "oauth_configuration",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tool_policy": {
+          "name": "tool_policy",
           "type": "json",
           "primaryKey": false,
           "notNull": false,

@@ -87,6 +87,12 @@ const EnvSchema = z.object({
   PROVISIONER_MODE: z.enum(["stub", "render", "daytona"]).optional(),
   WORKER_URL_TEMPLATE: z.string().optional(),
   WORKER_ACTIVITY_BASE_URL: z.string().optional(),
+  DEN_AUTOMATIONS_POLL_INTERVAL_MS: z.string().optional(),
+  DEN_AUTOMATIONS_BATCH_SIZE: z.string().optional(),
+  DEN_AUTOMATIONS_MAX_CONCURRENCY: z.string().optional(),
+  DEN_AUTOMATIONS_LEASE_MS: z.string().optional(),
+  DEN_AUTOMATIONS_RUN_TIMEOUT_MS: z.string().optional(),
+  DEN_AUTOMATIONS_RUNNER_CLAIM_DEADLINE_MS: z.string().optional(),
   OPENWORK_DAYTONA_ENV_PATH: z.string().optional(),
   RENDER_API_BASE: z.string().optional(),
   RENDER_API_KEY: z.string().optional(),
@@ -204,6 +210,13 @@ function splitCsv(value: string | undefined) {
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
+}
+
+// Lease and deadline math must never see NaN or a non-positive interval, so a
+// malformed tuning value falls back to the default instead of poisoning it.
+function automationTuning(value: string | undefined, fallback: number) {
+  const tuned = Number(value)
+  return Number.isSafeInteger(tuned) && tuned > 0 ? tuned : fallback
 }
 
 function optionalString(value: string | undefined) {
@@ -535,6 +548,14 @@ export const env = {
   workerActivityBaseUrl:
     optionalString(parsed.WORKER_ACTIVITY_BASE_URL) ??
     parsed.BETTER_AUTH_URL.trim().replace(/\/+$/, ""),
+  automations: {
+    pollIntervalMs: automationTuning(parsed.DEN_AUTOMATIONS_POLL_INTERVAL_MS, 15_000),
+    batchSize: automationTuning(parsed.DEN_AUTOMATIONS_BATCH_SIZE, 25),
+    maxConcurrency: automationTuning(parsed.DEN_AUTOMATIONS_MAX_CONCURRENCY, 4),
+    leaseMs: automationTuning(parsed.DEN_AUTOMATIONS_LEASE_MS, 60_000),
+    runTimeoutMs: automationTuning(parsed.DEN_AUTOMATIONS_RUN_TIMEOUT_MS, 900_000),
+    runnerClaimDeadlineMs: automationTuning(parsed.DEN_AUTOMATIONS_RUNNER_CLAIM_DEADLINE_MS, 60_000),
+  },
   inferenceProxyBaseUrl: optionalString(parsed.INFERENCE_PROXY_BASE_URL) ?? "http://127.0.0.1:8791",
   openRouterManagementApiKey: optionalString(parsed.OPENROUTER_MANAGEMENT_API_KEY),
   openRouterWorkspaceId: optionalString(parsed.OPENROUTER_WORKSPACE_ID),
